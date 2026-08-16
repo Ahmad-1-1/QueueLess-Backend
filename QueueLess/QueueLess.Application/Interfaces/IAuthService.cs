@@ -7,5 +7,8 @@ namespace QueueLess.Application.Interfaces
     {
         Task<RegisterResponse> RegisterAsync(RegisterRequest request);
         Task<LoginResponse> LoginAsync(LoginRequest request);
+        Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request);
+        Task ForgotPasswordAsync(ForgotPasswordRequest request);
+        Task ResetPasswordAsync(ResetPasswordRequest request);
     }
 }

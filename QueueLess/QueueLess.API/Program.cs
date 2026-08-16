@@ -8,6 +8,9 @@ using QueueLess.Infrastructure.Security;
 using QueueLess.API.Middleware;
 using Microsoft.OpenApi.Models;
 using System;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace QueueLess.API
 {
@@ -27,6 +30,9 @@ namespace QueueLess.API
             builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IOtpRepository, OtpRepository>();
+            builder.Services.AddScoped<IEmailService, EmailService>();
 
             builder.Services.AddControllers();
 
@@ -61,6 +67,28 @@ namespace QueueLess.API
                 });
             });
 
+            var jwtSecretKey = builder.Configuration["Jwt:SecretKey"]
+                ?? throw new InvalidOperationException("Jwt:SecretKey is not configured.");
+            var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+            var jwtAudience = builder.Configuration["Jwt:Audience"];
+
+            builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = jwtIssuer,
+                        ValidAudience = jwtAudience,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey)),
+                        ClockSkew = TimeSpan.Zero
+                    };
+                });
+
+            builder.Services.AddAuthorization();
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -74,6 +102,8 @@ namespace QueueLess.API
             app.UseMiddleware<GlobalExceptionMiddleware>();
 
             app.UseHttpsRedirection();
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 

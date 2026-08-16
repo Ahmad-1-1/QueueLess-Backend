@@ -13,17 +13,23 @@ namespace QueueLess.Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly IPasswordHasher _passwordHasher;
         private readonly ITokenService _tokenService;
+        private readonly IOtpRepository _otpRepository;
+        private readonly IEmailService _emailService;
 
         public AuthService(
             IUserRepository userRepository,
             IUnitOfWork unitOfWork,
             IPasswordHasher passwordHasher,
-            ITokenService tokenService)
+            ITokenService tokenService,
+            IOtpRepository otpRepository,
+            IEmailService emailService)
         {
             _userRepository = userRepository;
             _unitOfWork = unitOfWork;
             _passwordHasher = passwordHasher;
             _tokenService = tokenService;
+            _otpRepository = otpRepository;
+            _emailService = emailService;
         }
 
         public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
@@ -35,11 +41,9 @@ namespace QueueLess.Application.Services
             if (string.IsNullOrWhiteSpace(request.FullName))
                 throw new ArgumentException("Full name is required.", nameof(request.FullName));
 
-            // Check if mobile number is already registered
             var existingUser = await _userRepository.GetByMobileNumberAsync(request.MobileNumber);
             if (existingUser != null)
             {
-                // We'll throw a distinct exception or standard ApplicationException that will map to 409 Conflict.
                 throw new InvalidOperationException("Mobile number is already registered.");
             }
 
@@ -51,7 +55,8 @@ namespace QueueLess.Application.Services
                 MobileNumber = request.MobileNumber,
                 PasswordHash = passwordHash,
                 FullName = request.FullName,
-                Role = Role.Customer, // Default role for public registration
+                Email = request.Email,
+                Role = Role.Customer,
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true
             };
@@ -63,7 +68,8 @@ namespace QueueLess.Application.Services
             {
                 UserId = user.Id,
                 MobileNumber = user.MobileNumber,
-                FullName = user.FullName
+                FullName = user.FullName,
+                Email = request.Email
             };
         }
 
@@ -77,7 +83,6 @@ namespace QueueLess.Application.Services
             var user = await _userRepository.GetByMobileNumberAsync(request.MobileNumber);
             if (user == null || !_passwordHasher.VerifyPassword(user.PasswordHash, request.Password))
             {
-                // Throw UnauthorizedAccessException, which our middleware will map to 401 Unauthorized
                 throw new UnauthorizedAccessException("Invalid mobile number or password.");
             }
 
@@ -94,6 +99,69 @@ namespace QueueLess.Application.Services
                 UserId = user.Id,
                 Role = user.Role.ToString()
             };
+        }
+        public async Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.OldPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
+                throw new ArgumentException("Old and new passwords are required.");
+
+            var user = await _userRepository.GetByIdAsync(userId)
+                ?? throw new InvalidOperationException("User not found.");
+
+            if (!_passwordHasher.VerifyPassword(user.PasswordHash, request.OldPassword))
+                throw new UnauthorizedAccessException("Old password is incorrect.");
+
+            user.PasswordHash = _passwordHasher.HashPassword(request.NewPassword);
+            await _userRepository.UpdateAsync(user);
+            await _unitOfWork.SaveChangesAsync();
+        }
+        public async Task ForgotPasswordAsync(ForgotPasswordRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.MobileNumber))
+                throw new ArgumentException("Mobile number is required.");
+
+            var user = await _userRepository.GetByMobileNumberAsync(request.MobileNumber);
+
+            if (user == null || string.IsNullOrWhiteSpace(user.Email))
+                return;
+
+            var otpCode = new Random().Next(100000, 999999).ToString();
+
+            var otp = new OtpRequest
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                OtpCode = otpCode,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+                IsUsed = false,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _otpRepository.AddAsync(otp);
+            await _unitOfWork.SaveChangesAsync();
+
+            await _emailService.SendOtpEmailAsync(user.Email, user.FullName, otpCode);
+        }
+
+        public async Task ResetPasswordAsync(ResetPasswordRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.MobileNumber) ||
+                string.IsNullOrWhiteSpace(request.Otp) ||
+                string.IsNullOrWhiteSpace(request.NewPassword))
+                throw new ArgumentException("All fields are required.");
+
+            var user = await _userRepository.GetByMobileNumberAsync(request.MobileNumber)
+                ?? throw new UnauthorizedAccessException("Invalid request.");
+
+            var otp = await _otpRepository.GetLatestValidOtpAsync(user.Id, request.Otp)
+                ?? throw new UnauthorizedAccessException("Invalid or expired OTP.");
+
+            user.PasswordHash = _passwordHasher.HashPassword(request.NewPassword);
+            otp.IsUsed = true;
+
+            await _userRepository.UpdateAsync(user);
+            await _otpRepository.UpdateAsync(otp);
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }

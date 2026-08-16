@@ -19,7 +19,7 @@ namespace QueueLess.Infrastructure.Persistence
         public DbSet<PlatformAdmin> PlatformAdmins => Set<PlatformAdmin>();
         public DbSet<Ticket> Tickets => Set<Ticket>();
         public DbSet<Notification> Notifications => Set<Notification>();
-
+        public DbSet<OtpRequest> OtpRequests => Set<OtpRequest>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

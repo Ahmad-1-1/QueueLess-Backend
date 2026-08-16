@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using QueueLess.Application.DTOs;
@@ -35,6 +37,34 @@ namespace QueueLess.API.Controllers
         {
             var response = await _authService.LoginAsync(request);
             return Ok(response);
+        }
+        [Authorize]
+        [HttpPut("password/change")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? User.FindFirstValue("sub")!);
+            await _authService.ChangePasswordAsync(userId, request);
+            return Ok(new { message = "Password changed successfully." });
+        }
+        [HttpPost("password/forgot")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+        {
+            await _authService.ForgotPasswordAsync(request);
+            return Ok(new { message = "If the account exists, a reset code has been sent to the registered email." });
+        }
+
+        [HttpPost("password/reset")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+        {
+            await _authService.ResetPasswordAsync(request);
+            return Ok(new { message = "Password has been reset successfully." });
+        }
+        [Authorize]
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            return NoContent();
         }
     }
 }
