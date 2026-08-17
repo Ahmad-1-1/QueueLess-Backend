@@ -8,6 +8,7 @@ namespace QueueLess.Application.Interfaces
     {
         Task<User?> GetByIdAsync(Guid id);
         Task<User?> GetByMobileNumberAsync(string mobileNumber);
+        Task<User?> GetByEmailAsync(string email);
         Task AddAsync(User user);
     }
 }

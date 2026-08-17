@@ -35,12 +35,17 @@ namespace QueueLess.Application.Services
             if (string.IsNullOrWhiteSpace(request.FullName))
                 throw new ArgumentException("Full name is required.", nameof(request.FullName));
 
-            // Check if mobile number is already registered
-            var existingUser = await _userRepository.GetByMobileNumberAsync(request.MobileNumber);
-            if (existingUser != null)
-            {
-                // We'll throw a distinct exception or standard ApplicationException that will map to 409 Conflict.
+            // Check mobile number uniqueness (required)
+            var existingByMobile = await _userRepository.GetByMobileNumberAsync(request.MobileNumber);
+            if (existingByMobile != null)
                 throw new InvalidOperationException("Mobile number is already registered.");
+
+            // Check email uniqueness (optional — only if provided)
+            if (!string.IsNullOrWhiteSpace(request.Email))
+            {
+                var existingByEmail = await _userRepository.GetByEmailAsync(request.Email);
+                if (existingByEmail != null)
+                    throw new InvalidOperationException("Email address is already registered.");
             }
 
             var passwordHash = _passwordHasher.HashPassword(request.Password);
@@ -49,9 +54,10 @@ namespace QueueLess.Application.Services
             {
                 Id = Guid.NewGuid(),
                 MobileNumber = request.MobileNumber,
+                Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim().ToLower(),
                 PasswordHash = passwordHash,
                 FullName = request.FullName,
-                Role = Role.Customer, // Default role for public registration
+                Role = Role.Customer,
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true
             };
@@ -63,28 +69,34 @@ namespace QueueLess.Application.Services
             {
                 UserId = user.Id,
                 MobileNumber = user.MobileNumber,
+                Email = user.Email,
                 FullName = user.FullName
             };
         }
 
         public async Task<LoginResponse> LoginAsync(LoginRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.MobileNumber))
-                throw new ArgumentException("Mobile number is required.", nameof(request.MobileNumber));
             if (string.IsNullOrWhiteSpace(request.Password))
                 throw new ArgumentException("Password is required.", nameof(request.Password));
 
-            var user = await _userRepository.GetByMobileNumberAsync(request.MobileNumber);
+            bool hasMobile = !string.IsNullOrWhiteSpace(request.MobileNumber);
+            bool hasEmail = !string.IsNullOrWhiteSpace(request.Email);
+
+            if (!hasMobile && !hasEmail)
+                throw new ArgumentException("A mobile number or email address is required to log in.");
+
+            // Resolve user — mobile number takes priority
+            User? user = null;
+            if (hasMobile)
+                user = await _userRepository.GetByMobileNumberAsync(request.MobileNumber!);
+            else
+                user = await _userRepository.GetByEmailAsync(request.Email!);
+
             if (user == null || !_passwordHasher.VerifyPassword(user.PasswordHash, request.Password))
-            {
-                // Throw UnauthorizedAccessException, which our middleware will map to 401 Unauthorized
-                throw new UnauthorizedAccessException("Invalid mobile number or password.");
-            }
+                throw new UnauthorizedAccessException("Invalid credentials. Please check your mobile number, email, or password.");
 
             if (!user.IsActive)
-            {
                 throw new InvalidOperationException("User account is inactive.");
-            }
 
             var token = _tokenService.GenerateToken(user);
 

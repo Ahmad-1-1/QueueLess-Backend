@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using QueueLess.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using QueueLess.Infrastructure.Persistence;
 namespace QueueLess.Infrastructure.Migrations
 {
     [DbContext(typeof(QueueLessDbContext))]
-    partial class QueueLessDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260811133252_AddEmailToUser")]
+    partial class AddEmailToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
