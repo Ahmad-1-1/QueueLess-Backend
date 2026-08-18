@@ -36,24 +36,23 @@ namespace QueueLess.Application.Services
         {
             if (string.IsNullOrWhiteSpace(request.MobileNumber))
                 throw new ArgumentException("Mobile number is required.", nameof(request.MobileNumber));
+            if (string.IsNullOrWhiteSpace(request.Email))
+                throw new ArgumentException("Email is required.", nameof(request.Email));
             if (string.IsNullOrWhiteSpace(request.Password))
                 throw new ArgumentException("Password is required.", nameof(request.Password));
             if (string.IsNullOrWhiteSpace(request.FullName))
                 throw new ArgumentException("Full name is required.", nameof(request.FullName));
 
             var mobile = request.MobileNumber.Trim();
+            var email = request.Email.Trim().ToLower();
+
             var existingByMobile = await _userRepository.GetByMobileNumberAsync(mobile);
             if (existingByMobile != null)
                 throw new InvalidOperationException("Mobile number is already registered.");
 
-            string? email = null;
-            if (!string.IsNullOrWhiteSpace(request.Email))
-            {
-                email = request.Email.Trim().ToLower();
-                var existingByEmail = await _userRepository.GetByEmailAsync(email);
-                if (existingByEmail != null)
-                    throw new InvalidOperationException("Email address is already registered.");
-            }
+            var existingByEmail = await _userRepository.GetByEmailAsync(email);
+            if (existingByEmail != null)
+                throw new InvalidOperationException("Email address is already registered.");
 
             var passwordHash = _passwordHasher.HashPassword(request.Password);
 
@@ -83,24 +82,15 @@ namespace QueueLess.Application.Services
 
         public async Task<LoginResponse> LoginAsync(LoginRequest request)
         {
+            if (string.IsNullOrWhiteSpace(request.MobileNumber))
+                throw new ArgumentException("Mobile number is required.", nameof(request.MobileNumber));
             if (string.IsNullOrWhiteSpace(request.Password))
                 throw new ArgumentException("Password is required.", nameof(request.Password));
 
-            var hasMobile = !string.IsNullOrWhiteSpace(request.MobileNumber);
-            var hasEmail = !string.IsNullOrWhiteSpace(request.Email);
-
-            if (!hasMobile && !hasEmail)
-                throw new ArgumentException("A mobile number or email address is required to log in.");
-
-            User? user = null;
-            if (hasMobile)
-                user = await _userRepository.GetByMobileNumberAsync(request.MobileNumber!.Trim());
-
-            if (user == null && hasEmail)
-                user = await _userRepository.GetByEmailAsync(request.Email!.Trim().ToLower());
+            var user = await _userRepository.GetByMobileNumberAsync(request.MobileNumber.Trim());
 
             if (user == null || !_passwordHasher.VerifyPassword(user.PasswordHash, request.Password))
-                throw new UnauthorizedAccessException("Invalid credentials. Please check your mobile number, email, or password.");
+                throw new UnauthorizedAccessException("Invalid mobile number or password.");
 
             if (!user.IsActive)
                 throw new InvalidOperationException("User account is inactive.");
@@ -133,12 +123,10 @@ namespace QueueLess.Application.Services
 
         public async Task ForgotPasswordAsync(ForgotPasswordRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.AccountIdentifier))
-                throw new ArgumentException("Mobile number or email address is required.");
+            if (string.IsNullOrWhiteSpace(request.MobileNumber))
+                throw new ArgumentException("Mobile number is required.");
 
-            var identifier = request.AccountIdentifier.Trim();
-            var user = await _userRepository.GetByMobileNumberAsync(identifier)
-                       ?? await _userRepository.GetByEmailAsync(identifier.ToLower());
+            var user = await _userRepository.GetByMobileNumberAsync(request.MobileNumber.Trim());
 
             if (user == null || string.IsNullOrWhiteSpace(user.Email))
                 return;
@@ -163,15 +151,13 @@ namespace QueueLess.Application.Services
 
         public async Task ResetPasswordAsync(ResetPasswordRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.AccountIdentifier) ||
+            if (string.IsNullOrWhiteSpace(request.MobileNumber) ||
                 string.IsNullOrWhiteSpace(request.Otp) ||
                 string.IsNullOrWhiteSpace(request.NewPassword))
                 throw new ArgumentException("All fields are required.");
 
-            var identifier = request.AccountIdentifier.Trim();
-            var user = await _userRepository.GetByMobileNumberAsync(identifier)
-                       ?? await _userRepository.GetByEmailAsync(identifier.ToLower())
-                       ?? throw new UnauthorizedAccessException("Invalid request.");
+            var user = await _userRepository.GetByMobileNumberAsync(request.MobileNumber.Trim())
+                ?? throw new UnauthorizedAccessException("Invalid request.");
 
             var otp = await _otpRepository.GetLatestValidOtpAsync(user.Id, request.Otp.Trim())
                 ?? throw new UnauthorizedAccessException("Invalid or expired OTP code.");
