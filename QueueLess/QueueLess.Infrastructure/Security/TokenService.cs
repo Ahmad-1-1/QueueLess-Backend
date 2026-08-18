@@ -32,10 +32,13 @@ namespace QueueLess.Infrastructure.Security
 
             var claims = new List<Claim>
             {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.FullName),
                 new Claim(JwtRegisteredClaimNames.UniqueName, user.FullName),
                 new Claim(ClaimTypes.Role, user.Role.ToString()),
-                new Claim("mobileNumber", user.MobileNumber)
+                new Claim("mobileNumber", user.MobileNumber),
+                new Claim(ClaimTypes.Email, user.Email ?? string.Empty)
             };
 
             var token = new JwtSecurityToken(

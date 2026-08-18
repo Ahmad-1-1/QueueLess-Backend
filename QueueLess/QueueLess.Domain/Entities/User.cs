@@ -15,4 +15,3 @@ namespace QueueLess.Domain.Entities
         public bool IsActive { get; set; } = true;
     }
 }
-

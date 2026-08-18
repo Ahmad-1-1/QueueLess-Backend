@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using QueueLess.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using QueueLess.Infrastructure.Persistence;
 namespace QueueLess.Infrastructure.Migrations
 {
     [DbContext(typeof(QueueLessDbContext))]
-    partial class QueueLessDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260818123128_MakeEmailRequiredAndAddOtpRequest")]
+    partial class MakeEmailRequiredAndAddOtpRequest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -301,7 +304,8 @@ namespace QueueLess.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[Email] IS NOT NULL");
 
                     b.HasIndex("MobileNumber")
                         .IsUnique();
