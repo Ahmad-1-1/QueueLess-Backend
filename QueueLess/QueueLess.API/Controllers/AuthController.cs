@@ -42,8 +42,12 @@ namespace QueueLess.API.Controllers
         [HttpPut("password/change")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
-            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)
-                ?? User.FindFirstValue("sub")!);
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? User.FindFirstValue("sub");
+
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+                throw new UnauthorizedAccessException("Invalid authentication token.");
+
             await _authService.ChangePasswordAsync(userId, request);
             return Ok(new { message = "Password changed successfully." });
         }

@@ -114,7 +114,7 @@ namespace QueueLess.Application.Services
                 ?? throw new InvalidOperationException("User not found.");
 
             if (!_passwordHasher.VerifyPassword(user.PasswordHash, request.OldPassword))
-                throw new UnauthorizedAccessException("Old password is incorrect.");
+                throw new ArgumentException("Old password is incorrect.");
 
             user.PasswordHash = _passwordHasher.HashPassword(request.NewPassword);
             await _userRepository.UpdateAsync(user);
