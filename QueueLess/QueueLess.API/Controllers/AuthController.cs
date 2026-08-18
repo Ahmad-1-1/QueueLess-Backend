@@ -58,6 +58,13 @@ namespace QueueLess.API.Controllers
             return Ok(new { message = "If the account exists, a reset code has been sent to the registered email." });
         }
 
+        [HttpPost("password/verify-otp")]
+        public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
+        {
+            await _authService.VerifyOtpAsync(request);
+            return Ok(new { message = "OTP verified successfully." });
+        }
+
         [HttpPost("password/reset")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {

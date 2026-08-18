@@ -62,6 +62,15 @@ namespace QueueLess.Application.DTOs
         public string Email { get; set; } = string.Empty;
     }
 
+    public class VerifyOtpRequest
+    {
+        /// <summary>Email address associated with the user account.</summary>
+        public string Email { get; set; } = string.Empty;
+
+        /// <summary>6-digit OTP code received via email.</summary>
+        public string Otp { get; set; } = string.Empty;
+    }
+
     public class ResetPasswordRequest
     {
         /// <summary>Email address associated with the user account.</summary>

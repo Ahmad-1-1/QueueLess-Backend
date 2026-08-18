@@ -151,6 +151,19 @@ namespace QueueLess.Application.Services
             await _emailService.SendOtpEmailAsync(user.Email, user.FullName, otpCode);
         }
 
+        public async Task VerifyOtpAsync(VerifyOtpRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Otp))
+                throw new ArgumentException("Email and OTP code are required.");
+
+            var email = request.Email.Trim().ToLower();
+            var user = await _userRepository.GetByEmailAsync(email)
+                ?? throw new UnauthorizedAccessException("Invalid email or expired OTP.");
+
+            var otp = await _otpRepository.GetLatestValidOtpAsync(user.Id, request.Otp.Trim())
+                ?? throw new UnauthorizedAccessException("Invalid or expired OTP code.");
+        }
+
         public async Task ResetPasswordAsync(ResetPasswordRequest request)
         {
             if (string.IsNullOrWhiteSpace(request.Email) ||

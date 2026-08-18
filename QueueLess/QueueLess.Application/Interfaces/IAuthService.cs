@@ -9,6 +9,7 @@ namespace QueueLess.Application.Interfaces
         Task<LoginResponse> LoginAsync(LoginRequest request);
         Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request);
         Task ForgotPasswordAsync(ForgotPasswordRequest request);
+        Task VerifyOtpAsync(VerifyOtpRequest request);
         Task ResetPasswordAsync(ResetPasswordRequest request);
     }
 }
