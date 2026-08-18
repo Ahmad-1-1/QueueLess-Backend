@@ -123,12 +123,14 @@ namespace QueueLess.Application.Services
 
         public async Task ForgotPasswordAsync(ForgotPasswordRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.MobileNumber))
-                throw new ArgumentException("Mobile number is required.");
+            if (string.IsNullOrWhiteSpace(request.Email))
+                throw new ArgumentException("Email address is required.");
 
-            var user = await _userRepository.GetByMobileNumberAsync(request.MobileNumber.Trim());
+            var email = request.Email.Trim().ToLower();
+            var user = await _userRepository.GetByEmailAsync(email);
 
-            if (user == null || string.IsNullOrWhiteSpace(user.Email))
+            // Security Best Practice: Don't reveal whether account exists or not
+            if (user == null)
                 return;
 
             var otpCode = Random.Shared.Next(100000, 999999).ToString();
@@ -151,13 +153,14 @@ namespace QueueLess.Application.Services
 
         public async Task ResetPasswordAsync(ResetPasswordRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.MobileNumber) ||
+            if (string.IsNullOrWhiteSpace(request.Email) ||
                 string.IsNullOrWhiteSpace(request.Otp) ||
                 string.IsNullOrWhiteSpace(request.NewPassword))
-                throw new ArgumentException("All fields are required.");
+                throw new ArgumentException("All fields (Email, Otp, NewPassword) are required.");
 
-            var user = await _userRepository.GetByMobileNumberAsync(request.MobileNumber.Trim())
-                ?? throw new UnauthorizedAccessException("Invalid request.");
+            var email = request.Email.Trim().ToLower();
+            var user = await _userRepository.GetByEmailAsync(email)
+                ?? throw new UnauthorizedAccessException("Invalid email or expired OTP.");
 
             var otp = await _otpRepository.GetLatestValidOtpAsync(user.Id, request.Otp.Trim())
                 ?? throw new UnauthorizedAccessException("Invalid or expired OTP code.");

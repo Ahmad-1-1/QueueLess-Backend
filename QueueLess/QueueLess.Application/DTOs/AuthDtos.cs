@@ -58,15 +58,19 @@ namespace QueueLess.Application.DTOs
 
     public class ForgotPasswordRequest
     {
-        /// <summary>Mobile number associated with the account.</summary>
-        public string MobileNumber { get; set; } = string.Empty;
+        /// <summary>Email address associated with the user account.</summary>
+        public string Email { get; set; } = string.Empty;
     }
 
     public class ResetPasswordRequest
     {
-        /// <summary>Mobile number associated with the account.</summary>
-        public string MobileNumber { get; set; } = string.Empty;
+        /// <summary>Email address associated with the user account.</summary>
+        public string Email { get; set; } = string.Empty;
+
+        /// <summary>6-digit OTP code received via email.</summary>
         public string Otp { get; set; } = string.Empty;
+
+        /// <summary>New password to set.</summary>
         public string NewPassword { get; set; } = string.Empty;
     }
 }
