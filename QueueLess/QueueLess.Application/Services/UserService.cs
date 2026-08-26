@@ -72,17 +72,9 @@ namespace QueueLess.Application.Services
             }
 
             // 4. Update Password if provided
-            bool hasNewPass = !string.IsNullOrWhiteSpace(request.NewPassword);
-            bool hasConfirmPass = !string.IsNullOrWhiteSpace(request.ConfirmPassword);
-
-            if (hasNewPass || hasConfirmPass)
+            if (!string.IsNullOrWhiteSpace(request.NewPassword))
             {
-                if (request.NewPassword != request.ConfirmPassword)
-                {
-                    throw new ArgumentException("New password and confirm password do not match.");
-                }
-
-                user.PasswordHash = _passwordHasher.HashPassword(request.NewPassword!);
+                user.PasswordHash = _passwordHasher.HashPassword(request.NewPassword.Trim());
             }
 
             await _userRepository.UpdateAsync(user);
