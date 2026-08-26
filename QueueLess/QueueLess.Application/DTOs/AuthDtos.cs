@@ -47,7 +47,11 @@ namespace QueueLess.Application.DTOs
 
     public class UpdateProfileRequest
     {
-        public string FullName { get; set; } = string.Empty;
+        public string? FullName { get; set; }
+        public string? MobileNumber { get; set; }
+        public string? Email { get; set; }
+        public string? NewPassword { get; set; }
+        public string? ConfirmPassword { get; set; }
     }
 
     public class ChangePasswordRequest
