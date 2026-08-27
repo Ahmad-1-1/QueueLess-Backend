@@ -107,8 +107,13 @@ namespace QueueLess.Application.Services
 
         public async Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.OldPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
-                throw new ArgumentException("Old and new passwords are required.");
+            if (string.IsNullOrWhiteSpace(request.OldPassword) ||
+                string.IsNullOrWhiteSpace(request.NewPassword) ||
+                string.IsNullOrWhiteSpace(request.ConfirmPassword))
+                throw new ArgumentException("Old password, new password, and confirm password are required.");
+
+            if (request.NewPassword != request.ConfirmPassword)
+                throw new ArgumentException("New password and confirm password do not match.");
 
             var user = await _userRepository.GetByIdAsync(userId)
                 ?? throw new InvalidOperationException("User not found.");

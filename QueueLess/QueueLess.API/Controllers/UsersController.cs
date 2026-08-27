@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using QueueLess.Application.DTOs;
 using QueueLess.Application.Interfaces;
+using System;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace QueueLess.API.Controllers
 {
@@ -35,6 +37,27 @@ namespace QueueLess.API.Controllers
         public async Task<IActionResult> UpdateMe([FromBody] UpdateProfileRequest request)
         {
             var result = await _userService.UpdateProfileAsync(CurrentUserId, request);
+            return Ok(result);
+        }
+
+        [HttpPut("me/phone")]
+        public async Task<IActionResult> UpdatePhone([FromBody] UpdatePhoneRequest request)
+        {
+            var result = await _userService.UpdatePhoneAsync(CurrentUserId, request);
+            return Ok(result);
+        }
+
+        [HttpPut("me/email")]
+        public async Task<IActionResult> UpdateEmail([FromBody] UpdateEmailRequest request)
+        {
+            var result = await _userService.UpdateEmailAsync(CurrentUserId, request);
+            return Ok(result);
+        }
+
+        [HttpPut("me/name")]
+        public async Task<IActionResult> UpdateName([FromBody] UpdateNameRequest request)
+        {
+            var result = await _userService.UpdateNameAsync(CurrentUserId, request);
             return Ok(result);
         }
     }

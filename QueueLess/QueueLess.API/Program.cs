@@ -33,6 +33,8 @@ namespace QueueLess.API
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IOtpRepository, OtpRepository>();
             builder.Services.AddScoped<IEmailService, EmailService>();
+            builder.Services.AddScoped<IBusinessRepository, BusinessRepository>();
+            builder.Services.AddScoped<IHomeService, HomeService>();
 
             builder.Services.AddControllers();
 
@@ -100,9 +102,15 @@ namespace QueueLess.API
             //}
 
             // Configure the HTTP request pipeline.
-
             app.UseSwagger();
             app.UseSwaggerUI();
+
+            // Seed initial categories and businesses
+            using (var scope = app.Services.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<QueueLessDbContext>();
+                DbSeeder.SeedAsync(context).GetAwaiter().GetResult();
+            }
 
             // Global exception handling
             app.UseMiddleware<GlobalExceptionMiddleware>();

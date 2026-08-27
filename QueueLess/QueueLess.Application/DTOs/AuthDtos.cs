@@ -53,10 +53,26 @@ namespace QueueLess.Application.DTOs
         public string? NewPassword { get; set; }
     }
 
+    public class UpdatePhoneRequest
+    {
+        public string MobileNumber { get; set; } = string.Empty;
+    }
+
+    public class UpdateEmailRequest
+    {
+        public string Email { get; set; } = string.Empty;
+    }
+
+    public class UpdateNameRequest
+    {
+        public string FullName { get; set; } = string.Empty;
+    }
+
     public class ChangePasswordRequest
     {
         public string OldPassword { get; set; } = string.Empty;
         public string NewPassword { get; set; } = string.Empty;
+        public string ConfirmPassword { get; set; } = string.Empty;
     }
 
     public class ForgotPasswordRequest

@@ -27,6 +27,8 @@ namespace QueueLess.Infrastructure.Persistence.Configurations
             builder.ToTable("BusinessCategories");
             builder.HasKey(c => c.Id);
             builder.Property(c => c.Name).IsRequired().HasMaxLength(100);
+            builder.Property(c => c.IconUrl).HasMaxLength(500);
+            builder.Property(c => c.Description).HasMaxLength(300);
         }
     }
 
@@ -39,6 +41,9 @@ namespace QueueLess.Infrastructure.Persistence.Configurations
             builder.Property(b => b.Name).IsRequired().HasMaxLength(100);
             builder.Property(b => b.Description).HasMaxLength(500);
             builder.Property(b => b.Address).HasMaxLength(200);
+            builder.Property(b => b.Location).HasMaxLength(100);
+            builder.Property(b => b.ImageUrl).HasMaxLength(500);
+            builder.Property(b => b.Tag).HasMaxLength(50);
 
             builder.HasOne(b => b.Category)
                 .WithMany(c => c.Businesses)
