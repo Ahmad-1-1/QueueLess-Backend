@@ -35,6 +35,7 @@ namespace QueueLess.API
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IBusinessRepository, BusinessRepository>();
             builder.Services.AddScoped<IHomeService, HomeService>();
+            builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
 
             builder.Services.AddControllers();
 
@@ -118,6 +119,9 @@ namespace QueueLess.API
             //app.UseHttpsRedirection();
 
             app.UseAuthentication();
+
+            // Reject requests with blacklisted tokens (e.g. after logout)
+            app.UseMiddleware<TokenBlacklistMiddleware>();
 
             app.UseAuthorization();
 

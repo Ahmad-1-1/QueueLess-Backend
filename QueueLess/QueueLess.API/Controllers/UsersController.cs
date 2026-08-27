@@ -35,13 +35,6 @@ namespace QueueLess.API.Controllers
             return Ok(result);
         }
 
-        [HttpPut("me")]
-        public async Task<IActionResult> UpdateMe([FromBody] UpdateProfileRequest request)
-        {
-            var result = await _userService.UpdateProfileAsync(CurrentUserId, request);
-            return Ok(result);
-        }
-
         [HttpPut("me/phone")]
         public async Task<IActionResult> UpdatePhone([FromBody] UpdatePhoneRequest request)
         {

@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -13,10 +14,12 @@ namespace QueueLess.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly ITokenBlacklistService _tokenBlacklist;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, ITokenBlacklistService tokenBlacklist)
         {
             _authService = authService;
+            _tokenBlacklist = tokenBlacklist;
         }
 
         [HttpPost("register")]
@@ -38,19 +41,7 @@ namespace QueueLess.API.Controllers
             var response = await _authService.LoginAsync(request);
             return Ok(response);
         }
-        [Authorize]
-        [HttpPut("password/change")]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
-        {
-            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier)
-                ?? User.FindFirstValue("sub");
 
-            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
-                throw new UnauthorizedAccessException("Invalid authentication token.");
-
-            await _authService.ChangePasswordAsync(userId, request);
-            return Ok(new { message = "Password changed successfully." });
-        }
         [HttpPost("password/forgot")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
         {
@@ -71,11 +62,27 @@ namespace QueueLess.API.Controllers
             await _authService.ResetPasswordAsync(request);
             return Ok(new { message = "Password has been reset successfully." });
         }
+
+        /// <summary>
+        /// Logs out the current user by invalidating their JWT token.
+        /// The token will be rejected on all subsequent requests until it naturally expires.
+        /// </summary>
         [Authorize]
         [HttpPost("logout")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         public IActionResult Logout()
         {
+            var jti = User.FindFirstValue(JwtRegisteredClaimNames.Jti);
+            var expClaim = User.FindFirstValue(JwtRegisteredClaimNames.Exp);
+
+            if (!string.IsNullOrEmpty(jti) && long.TryParse(expClaim, out var expUnix))
+            {
+                var expiry = DateTimeOffset.FromUnixTimeSeconds(expUnix).UtcDateTime;
+                _tokenBlacklist.Blacklist(jti, expiry);
+            }
+
             return NoContent();
         }
     }
 }
+
