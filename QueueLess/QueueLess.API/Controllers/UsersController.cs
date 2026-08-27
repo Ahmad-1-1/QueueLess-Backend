@@ -15,10 +15,12 @@ namespace QueueLess.API.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly IAuthService _authService;
 
-        public UsersController(IUserService userService)
+        public UsersController(IUserService userService, IAuthService authService)
         {
             _userService = userService;
+            _authService = authService;
         }
 
         private Guid CurrentUserId =>
@@ -59,6 +61,13 @@ namespace QueueLess.API.Controllers
         {
             var result = await _userService.UpdateNameAsync(CurrentUserId, request);
             return Ok(result);
+        }
+
+        [HttpPut("me/password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+        {
+            await _authService.ChangePasswordAsync(CurrentUserId, request);
+            return Ok(new { message = "Password changed successfully." });
         }
     }
 }
