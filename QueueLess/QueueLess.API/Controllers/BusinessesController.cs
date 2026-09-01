@@ -19,15 +19,23 @@ namespace QueueLess.API.Controllers
         }
 
         /// <summary>
-        /// Get list of businesses with optional filtering by category, search term, or location.
+        /// Gets a list of active businesses with optional filtering
+        /// by category, search term, or geographic location.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetBusinesses(
             [FromQuery] string? category,
             [FromQuery] string? search,
-            [FromQuery] string? location)
+            [FromQuery] double? latitude,
+            [FromQuery] double? longitude)
         {
-            var businesses = await _businessRepository.GetRecommendedBusinessesAsync(category, search, location);
+            var businesses = await _businessRepository
+                .GetRecommendedBusinessesAsync(
+                    latitude,
+                    longitude,
+                    category,
+                    search);
+
             return Ok(businesses);
         }
 

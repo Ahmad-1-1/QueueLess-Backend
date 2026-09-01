@@ -21,10 +21,15 @@ namespace QueueLess.Infrastructure.Persistence.Repositories
         {
             return await _context.BusinessCategories
                 .AsNoTracking()
+                .OrderBy(c => c.Name)
                 .ToListAsync();
         }
 
-        public async Task<List<Business>> GetRecommendedBusinessesAsync(string? categoryName = null, string? search = null, string? location = null)
+        public async Task<List<Business>> GetRecommendedBusinessesAsync(
+            double? latitude = null,
+            double? longitude = null,
+            string? categoryName = null,
+            string? search = null)
         {
             var query = _context.Businesses
                 .Include(b => b.Category)
@@ -33,27 +38,72 @@ namespace QueueLess.Infrastructure.Persistence.Repositories
                 .AsNoTracking()
                 .AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(categoryName) && !string.Equals(categoryName, "All", StringComparison.OrdinalIgnoreCase))
+            // Category filter
+            if (!string.IsNullOrWhiteSpace(categoryName) &&
+                !string.Equals(categoryName, "All", StringComparison.OrdinalIgnoreCase))
             {
-                query = query.Where(b => b.Category != null && b.Category.Name.ToLower() == categoryName.Trim().ToLower());
+                var category = categoryName.Trim().ToLower();
+
+                query = query.Where(b =>
+                    b.Category != null &&
+                    b.Category.Name.ToLower() == category);
             }
 
+            // Search filter
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var term = search.Trim().ToLower();
-                query = query.Where(b => b.Name.ToLower().Contains(term) ||
-                                         b.Description.ToLower().Contains(term) ||
-                                         (b.Category != null && b.Category.Name.ToLower().Contains(term)) ||
-                                         b.Services.Any(s => s.Name.ToLower().Contains(term)));
+
+                query = query.Where(b =>
+                    b.Name.ToLower().Contains(term) ||
+                    b.Description.ToLower().Contains(term) ||
+                    (b.Category != null &&
+                     b.Category.Name.ToLower().Contains(term)) ||
+                    b.Services.Any(s =>
+                        s.Name.ToLower().Contains(term)));
             }
 
-            if (!string.IsNullOrWhiteSpace(location))
+            // When GPS coordinates are not provided,
+            // return active businesses ordered by rating.
+            if (!latitude.HasValue || !longitude.HasValue)
             {
-                var loc = location.Trim().ToLower();
-                query = query.Where(b => b.Location.ToLower().Contains(loc) || b.Address.ToLower().Contains(loc));
+                return await query
+                    .OrderByDescending(b => b.Rating)
+                    .ThenByDescending(b => b.PopularityScore)
+                    .ThenBy(b => b.Name)
+                    .ToListAsync();
             }
 
-            return await query.ToListAsync();
+            // Get businesses that have coordinates.
+            // Distance calculation is handled in the application layer.
+            query = query.Where(b =>
+                b.Latitude.HasValue &&
+                b.Longitude.HasValue);
+
+            return await query
+                .OrderByDescending(b => b.Rating)
+                .ThenByDescending(b => b.PopularityScore)
+                .ThenBy(b => b.Name)
+                .ToListAsync();
+        }
+
+        public async Task<List<Business>> GetPopularBusinessesAsync(int topN)
+        {
+            if (topN <= 0)
+            {
+                return new List<Business>();
+            }
+
+            return await _context.Businesses
+                .Include(b => b.Category)
+                .Include(b => b.Services)
+                .Where(b => b.IsActive)
+                .AsNoTracking()
+                .OrderByDescending(b => b.PopularityScore)
+                .ThenByDescending(b => b.Rating)
+                .ThenBy(b => b.Name)
+                .Take(topN)
+                .ToListAsync();
         }
 
         public async Task<Business?> GetByIdAsync(Guid id)

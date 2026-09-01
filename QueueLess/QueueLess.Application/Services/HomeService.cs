@@ -4,141 +4,248 @@ using System.Linq;
 using System.Threading.Tasks;
 using QueueLess.Application.DTOs;
 using QueueLess.Application.Interfaces;
-using QueueLess.Domain.Entities;
 
 namespace QueueLess.Application.Services
 {
     public class HomeService : IHomeService
     {
-        private readonly IBusinessRepository _businessRepository;
+        private const double NearbyRadiusKm = 5.0;
+        private const double RecommendedRadiusKm = 20.0;
+        private const int PopularServicesCount = 5;
 
-        public HomeService(IBusinessRepository businessRepository)
+        private readonly IBusinessRepository _businessRepository;
+        private readonly IPictureResolver _pictureResolver;
+
+        public HomeService(
+            IBusinessRepository businessRepository,
+            IPictureResolver pictureResolver)
         {
             _businessRepository = businessRepository;
+            _pictureResolver = pictureResolver;
         }
 
-        public async Task<HomePageDataResponse> GetHomePageDataAsync(string? category = null, string? search = null, string? location = null)
+        public async Task<HomePageDataResponse> GetHomePageDataAsync(
+            double? latitude = null,
+            double? longitude = null)
         {
-            var dbCategories = await _businessRepository.GetCategoriesAsync();
-            var dbBusinesses = await _businessRepository.GetRecommendedBusinessesAsync(category, search, location);
+            var dbCategories =
+                await _businessRepository.GetCategoriesAsync();
 
-            // Default categories matching Figma UI if DB has none
-            var categoryList = new List<CategoryDto>();
-            if (dbCategories.Any())
-            {
-                categoryList = dbCategories.Select(c => new CategoryDto
+            var popularBusinesses =
+                await _businessRepository.GetPopularBusinessesAsync(
+                    PopularServicesCount);
+
+            var recommendedBusinesses =
+                await _businessRepository.GetRecommendedBusinessesAsync(
+                    latitude,
+                    longitude);
+
+            // ============================================================
+            // Categories
+            // ============================================================
+
+            var categories = dbCategories
+                .Select(c => new CategoryDto
                 {
                     Id = c.Id,
                     Name = c.Name,
-                    IconUrl = c.IconUrl,
+                    IconUrl = _pictureResolver.ResolveCategoryIcon(
+                        c.IconUrl),
                     Description = c.Description
-                }).ToList();
-            }
-            else
-            {
-                categoryList = new List<CategoryDto>
-                {
-                    new CategoryDto { Id = Guid.NewGuid(), Name = "All" },
-                    new CategoryDto { Id = Guid.NewGuid(), Name = "Bank", Description = "Financial Transactions" },
-                    new CategoryDto { Id = Guid.NewGuid(), Name = "Hospital", Description = "Medical & Consultations" },
-                    new CategoryDto { Id = Guid.NewGuid(), Name = "Clinic", Description = "Check-ups & Vaccinations" }
-                };
-            }
+                })
+                .ToList();
 
-            // Popular service cards matching Figma UI banner
-            var popularServices = new List<PopularServiceCardDto>
-            {
-                new PopularServiceCardDto
-                {
-                    CategoryId = categoryList.FirstOrDefault(c => c.Name == "Hospital")?.Id ?? Guid.Empty,
-                    Title = "Hospital",
-                    Subtitle = "Medical & Consultations",
-                    ImageUrl = "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=600",
-                    ActionText = "Book Now"
-                },
-                new PopularServiceCardDto
-                {
-                    CategoryId = categoryList.FirstOrDefault(c => c.Name == "Bank")?.Id ?? Guid.Empty,
-                    Title = "Bank",
-                    Subtitle = "Financial Transactions",
-                    ImageUrl = "https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?w=600",
-                    ActionText = "Book Now"
-                }
-            };
+            // ============================================================
+            // Popular Services
+            // ============================================================
 
-            // Recommended services matching Figma UI cards
-            var recommendedServices = new List<RecommendedBusinessDto>();
-
-            if (dbBusinesses.Any())
-            {
-                recommendedServices = dbBusinesses.Select(b => new RecommendedBusinessDto
+            var popularServices = popularBusinesses
+                .Select(b => new PopularServiceCardDto
                 {
-                    Id = b.Id,
-                    Name = b.Name,
-                    CategoryName = b.Category?.Name ?? "General",
-                    Location = string.IsNullOrWhiteSpace(b.Location) ? "Downtown" : b.Location,
-                    Description = b.Description,
+                    BusinessId = b.Id,
+                    CategoryId = b.CategoryId,
+
+                    Title = b.Name,
+
+                    Subtitle = b.Category?.Description
+                               ?? b.Category?.Name
+                               ?? "General Service",
+
+                    ImageUrl =
+                        _pictureResolver.ResolvePopularServiceImage(
+                            b.ImageUrl),
+
                     Rating = b.Rating,
-                    IsOpen = b.IsOpen,
-                    Tag = string.IsNullOrWhiteSpace(b.Tag) ? "Popular" : b.Tag,
-                    ImageUrl = b.ImageUrl ?? "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=600",
-                    Address = b.Address
-                }).ToList();
-            }
-            else
-            {
-                // Figma UI sample fallback items
-                recommendedServices = new List<RecommendedBusinessDto>
+
+                    ActionText = "Book Now"
+                })
+                .ToList();
+
+            // ============================================================
+            // Recommended Businesses
+            // ============================================================
+
+            var recommendedServices = recommendedBusinesses
+                .Select(b =>
                 {
-                    new RecommendedBusinessDto
+                    double? distanceKm = null;
+
+                    if (latitude.HasValue &&
+                        longitude.HasValue &&
+                        b.Latitude.HasValue &&
+                        b.Longitude.HasValue)
                     {
-                        Id = Guid.NewGuid(),
-                        Name = "City General Hospital",
-                        CategoryName = "Hospital",
-                        Location = "Downtown",
-                        Description = "Emergency care, specialist consultation",
-                        Rating = 4.6,
-                        IsOpen = true,
-                        Tag = "Popular",
-                        ImageUrl = "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?w=600",
-                        Address = "123 Main St, Downtown"
-                    },
-                    new RecommendedBusinessDto
-                    {
-                        Id = Guid.NewGuid(),
-                        Name = "Metro Bank – CBD Branch",
-                        CategoryName = "Bank",
-                        Location = "Central District",
-                        Description = "Accounts, loans, foreign exchange",
-                        Rating = 4.5,
-                        IsOpen = true,
-                        Tag = "Popular",
-                        ImageUrl = "https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?w=600",
-                        Address = "456 Central Ave, CBD"
-                    },
-                    new RecommendedBusinessDto
-                    {
-                        Id = Guid.NewGuid(),
-                        Name = "National Health Clinic",
-                        CategoryName = "Clinic",
-                        Location = "Riverside",
-                        Description = "Check-ups, vaccinations",
-                        Rating = 4.8,
-                        IsOpen = true,
-                        Tag = "Nearby",
-                        ImageUrl = "https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=600",
-                        Address = "789 River Rd, Riverside"
+                        distanceKm = CalculateDistanceKm(
+                            latitude.Value,
+                            longitude.Value,
+                            b.Latitude.Value,
+                            b.Longitude.Value);
                     }
+
+                    return new
+                    {
+                        Business = b,
+                        DistanceKm = distanceKm
+                    };
+                })
+                .Where(x =>
+                    !x.DistanceKm.HasValue ||
+                    x.DistanceKm.Value <= RecommendedRadiusKm)
+                .OrderBy(x =>
+                    x.DistanceKm.HasValue
+                        ? x.DistanceKm.Value
+                        : double.MaxValue)
+                .ThenByDescending(x => x.Business.Rating)
+                .ThenByDescending(x => x.Business.PopularityScore)
+                .Select(x => new RecommendedBusinessDto
+                {
+                    Id = x.Business.Id,
+
+                    Name = x.Business.Name,
+
+                    CategoryName =
+                        x.Business.Category?.Name
+                        ?? "General",
+
+                    Address = x.Business.Address,
+
+                    Description = x.Business.Description,
+
+                    Rating = x.Business.Rating,
+
+                    IsOpen = x.Business.IsOpen,
+
+                    Tag = GetRecommendationTag(
+                        x.DistanceKm,
+                        x.Business.PopularityScore),
+
+                    DistanceKm = x.DistanceKm.HasValue
+                        ? Math.Round(x.DistanceKm.Value, 2)
+                        : null,
+
+                    ImageUrl =
+                        _pictureResolver.ResolveBusinessImage(
+                            x.Business.ImageUrl)
+                })
+                .ToList();
+
+            // ============================================================
+            // User Location
+            // ============================================================
+
+            UserLocationDto? userLocation = null;
+
+            if (latitude.HasValue && longitude.HasValue)
+            {
+                userLocation = new UserLocationDto
+                {
+                    Latitude = latitude.Value,
+                    Longitude = longitude.Value
                 };
             }
+
+            // ============================================================
+            // Final Home Response
+            // ============================================================
 
             return new HomePageDataResponse
             {
-                CurrentLocation = string.IsNullOrWhiteSpace(location) ? "Tanta City Center" : location,
-                Categories = categoryList,
+                UserLocation = userLocation,
+
+                Categories = categories,
+
                 PopularServices = popularServices,
+
                 RecommendedServices = recommendedServices
             };
+        }
+
+        // ================================================================
+        // Recommendation Tag
+        // ================================================================
+
+        private static string GetRecommendationTag(
+            double? distanceKm,
+            int popularityScore)
+        {
+            if (distanceKm.HasValue &&
+                distanceKm.Value <= NearbyRadiusKm)
+            {
+                return "Nearby";
+            }
+
+            if (popularityScore > 0)
+            {
+                return "Popular";
+            }
+
+            return string.Empty;
+        }
+
+        // ================================================================
+        // Haversine Distance
+        // ================================================================
+
+        private static double CalculateDistanceKm(
+            double latitude1,
+            double longitude1,
+            double latitude2,
+            double longitude2)
+        {
+            const double earthRadiusKm = 6371.0;
+
+            var latitudeDifference =
+                DegreesToRadians(latitude2 - latitude1);
+
+            var longitudeDifference =
+                DegreesToRadians(longitude2 - longitude1);
+
+            var latitude1Radians =
+                DegreesToRadians(latitude1);
+
+            var latitude2Radians =
+                DegreesToRadians(latitude2);
+
+            var a =
+                Math.Sin(latitudeDifference / 2) *
+                Math.Sin(latitudeDifference / 2)
+                +
+                Math.Cos(latitude1Radians) *
+                Math.Cos(latitude2Radians) *
+                Math.Sin(longitudeDifference / 2) *
+                Math.Sin(longitudeDifference / 2);
+
+            var c =
+                2 * Math.Atan2(
+                    Math.Sqrt(a),
+                    Math.Sqrt(1 - a));
+
+            return earthRadiusKm * c;
+        }
+
+        private static double DegreesToRadians(double degrees)
+        {
+            return degrees * Math.PI / 180.0;
         }
     }
 }

@@ -5,6 +5,8 @@ namespace QueueLess.Application.Interfaces
 {
     public interface IHomeService
     {
-        Task<HomePageDataResponse> GetHomePageDataAsync(string? category = null, string? search = null, string? location = null);
+        Task<HomePageDataResponse> GetHomePageDataAsync(
+            double? latitude = null,
+            double? longitude = null);
     }
 }

@@ -18,16 +18,26 @@ namespace QueueLess.API.Controllers
         }
 
         /// <summary>
-        /// Get all data required for the Home Screen UI (Categories, Popular Services, Recommended Businesses).
+        /// Gets all data required for the Home Screen.
         /// </summary>
+        /// <param name="latitude">
+        /// User's current latitude obtained from the mobile device.
+        /// </param>
+        /// <param name="longitude">
+        /// User's current longitude obtained from the mobile device.
+        /// </param>
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(HomePageDataResponse))]
+        [ProducesResponseType(
+            StatusCodes.Status200OK,
+            Type = typeof(HomePageDataResponse))]
         public async Task<IActionResult> GetHomePageData(
-            [FromQuery] string? category,
-            [FromQuery] string? search,
-            [FromQuery] string? location)
+            [FromQuery] double? latitude,
+            [FromQuery] double? longitude)
         {
-            var data = await _homeService.GetHomePageDataAsync(category, search, location);
+            var data = await _homeService.GetHomePageDataAsync(
+                latitude,
+                longitude);
+
             return Ok(data);
         }
     }
