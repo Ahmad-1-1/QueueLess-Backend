@@ -12,10 +12,12 @@ namespace QueueLess.API.Controllers
     public class BusinessesController : ControllerBase
     {
         private readonly IBusinessRepository _businessRepository;
+        private readonly ITicketService _ticketService;
 
-        public BusinessesController(IBusinessRepository businessRepository)
+        public BusinessesController(IBusinessRepository businessRepository, ITicketService ticketService)
         {
             _businessRepository = businessRepository;
+            _ticketService = ticketService;
         }
 
         /// <summary>
@@ -102,5 +104,15 @@ namespace QueueLess.API.Controllers
 
             return Ok(result);
         }
+
+        /// <summary>
+        /// Gets available services for a specific business branch, including queue wait times and open counters.
+        /// </summary>
+        [HttpGet("{id:guid}/services")]
+        public async Task<IActionResult> GetBusinessServices(Guid id)
+        {
+            var services = await _ticketService.GetServicesByBusinessIdAsync(id);
+            return Ok(services);
+        }
     }
-}
+}

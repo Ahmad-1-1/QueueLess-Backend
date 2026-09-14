@@ -12,6 +12,7 @@ namespace QueueLess.Domain.Entities
         public Guid? AssignedStaffId { get; set; }
         public bool IsActive { get; set; } = true;
         public int AvgServiceTimeMinutes { get; set; }
+        public int CountersOpen { get; set; } = 1;
 
         // Navigation
         public Business? Business { get; set; }

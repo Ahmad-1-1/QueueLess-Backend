@@ -9,6 +9,10 @@ namespace QueueLess.Domain.Entities
         public Guid ServiceId { get; set; }
         public Guid CustomerId { get; set; }
         public int QueueNumber { get; set; }
+        public string TicketNumber { get; set; } = string.Empty;
+        public string QrCodeData { get; set; } = string.Empty;
+        public bool NotifyByPush { get; set; } = true;
+        public bool NotifyByEmail { get; set; } = false;
         public TicketStatus Status { get; set; } = TicketStatus.Waiting;
         public int PositionSnapshot { get; set; }
         public DateTime JoinedAt { get; set; } = DateTime.UtcNow;

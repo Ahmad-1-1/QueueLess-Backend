@@ -36,6 +36,8 @@ namespace QueueLess.API
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IBusinessRepository, BusinessRepository>();
             builder.Services.AddScoped<IHomeService, HomeService>();
+            builder.Services.AddScoped<ITicketRepository, TicketRepository>();
+            builder.Services.AddScoped<ITicketService, TicketService>();
             builder.Services.Configure<PictureOptions>(
                 builder.Configuration.GetSection(PictureOptions.SectionName));
             builder.Services.AddScoped<IPictureResolver, PictureResolver>();

@@ -111,6 +111,9 @@ namespace QueueLess.Infrastructure.Persistence.Configurations
             builder.Property(s => s.Description)
                 .HasMaxLength(500);
 
+            builder.Property(s => s.CountersOpen)
+                .HasDefaultValue(1);
+
             builder.HasOne(s => s.Business)
                 .WithMany(b => b.Services)
                 .HasForeignKey(s => s.BusinessId)
@@ -171,6 +174,13 @@ namespace QueueLess.Infrastructure.Persistence.Configurations
         {
             builder.ToTable("Tickets");
             builder.HasKey(t => t.Id);
+
+            builder.Property(t => t.TicketNumber)
+                .IsRequired()
+                .HasMaxLength(20);
+
+            builder.Property(t => t.QrCodeData)
+                .HasMaxLength(100);
 
             builder.Property(t => t.Status)
                 .HasConversion<string>()

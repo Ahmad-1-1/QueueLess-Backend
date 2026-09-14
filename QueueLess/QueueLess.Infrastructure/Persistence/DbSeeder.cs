@@ -374,10 +374,11 @@ namespace QueueLess.Infrastructure.Persistence
                     {
                         Id = Guid.NewGuid(),
                         BusinessId = metroBankId,
-                        Name = "Teller & Cash Deposit",
+                        Name = "Customer service",
                         Description =
-                            "Cash transactions, deposits & withdrawals",
-                        AvgServiceTimeMinutes = 10
+                            "Account help, cards, general queries",
+                        AvgServiceTimeMinutes = 9,
+                        CountersOpen = 5
                     });
 
                 seedServices.Add(
@@ -385,10 +386,23 @@ namespace QueueLess.Infrastructure.Persistence
                     {
                         Id = Guid.NewGuid(),
                         BusinessId = metroBankId,
-                        Name = "Customer Account Services",
+                        Name = "Loans and credit",
                         Description =
-                            "New accounts, credit cards & loans",
-                        AvgServiceTimeMinutes = 25
+                            "Applications and repayments",
+                        AvgServiceTimeMinutes = 15,
+                        CountersOpen = 3
+                    });
+
+                seedServices.Add(
+                    new Service
+                    {
+                        Id = Guid.NewGuid(),
+                        BusinessId = metroBankId,
+                        Name = "Business banking",
+                        Description =
+                            "Company accounts and merchant services",
+                        AvgServiceTimeMinutes = 20,
+                        CountersOpen = 2
                     });
             }
 
