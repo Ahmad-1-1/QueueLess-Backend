@@ -114,5 +114,63 @@ namespace QueueLess.API.Controllers
             var services = await _ticketService.GetServicesByBusinessIdAsync(id);
             return Ok(services);
         }
+
+        /// <summary>
+        /// Gets all branches of the selected business brand/chain, with distance relative to user location.
+        /// Used to populate the Branch picker dropdown in the Reserve a Ticket screen.
+        /// </summary>
+        [HttpGet("{id:guid}/branches")]
+        public async Task<IActionResult> GetBusinessBranches(
+            Guid id,
+            [FromQuery] double? latitude,
+            [FromQuery] double? longitude)
+        {
+            var branches = await _businessRepository.GetBranchesAsync(id);
+
+            var result = branches.Select(b =>
+            {
+                double? distanceKm = null;
+                if (latitude.HasValue && longitude.HasValue && b.Latitude.HasValue && b.Longitude.HasValue)
+                {
+                    distanceKm = CalculateDistanceInKilometers(
+                        latitude.Value, longitude.Value,
+                        b.Latitude.Value, b.Longitude.Value);
+                }
+
+                return new BranchDto
+                {
+                    Id = b.Id,
+                    Name = b.Name,
+                    BrandName = b.BrandName,
+                    Address = b.Address,
+                    Latitude = b.Latitude,
+                    Longitude = b.Longitude,
+                    DistanceKm = distanceKm,
+                    Rating = b.Rating,
+                    IsOpen = b.IsOpen
+                };
+            })
+            .OrderBy(b => b.DistanceKm ?? double.MaxValue)
+            .ToList();
+
+            return Ok(result);
+        }
+
+        private static double CalculateDistanceInKilometers(double lat1, double lon1, double lat2, double lon2)
+        {
+            const double earthRadiusKm = 6371.0;
+            var dLat = DegreesToRadians(lat2 - lat1);
+            var dLon = DegreesToRadians(lon2 - lon1);
+
+            var a = Math.Sin(dLat / 2.0) * Math.Sin(dLat / 2.0) +
+                    Math.Cos(DegreesToRadians(lat1)) * Math.Cos(DegreesToRadians(lat2)) *
+                    Math.Sin(dLon / 2.0) * Math.Sin(dLon / 2.0);
+
+            var c = 2.0 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1.0 - a));
+            return Math.Round(earthRadiusKm * c, 1);
+        }
+
+        private static double DegreesToRadians(double degrees) => degrees * (Math.PI / 180.0);
     }
-}
+}
+

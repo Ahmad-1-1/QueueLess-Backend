@@ -136,6 +136,7 @@ namespace QueueLess.Infrastructure.Persistence
                 new Business
                 {
                     Name = "Metro Bank – CBD Branch",
+                    BrandName = "Metro Bank",
                     Description =
                         "Accounts, loans, customer service & foreign exchange",
                     Address =
@@ -146,6 +147,116 @@ namespace QueueLess.Infrastructure.Persistence
 
                     Rating = 4.5,
                     PopularityScore = 88,
+                    IsOpen = true,
+
+                    ImageUrl =
+                        "https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?w=600",
+
+                    CategoryId = bankCategory.Id
+                },
+
+                new Business
+                {
+                    Name = "Tanta City Center Branch",
+                    BrandName = "Metro Bank",
+                    Description =
+                        "Customer service, cards & loans",
+                    Address =
+                        "48 El Helw Street, Tanta",
+
+                    Latitude = 30.7865,
+                    Longitude = 31.0004,
+
+                    Rating = 4.7,
+                    PopularityScore = 90,
+                    IsOpen = true,
+
+                    ImageUrl =
+                        "https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?w=600",
+
+                    CategoryId = bankCategory.Id
+                },
+
+                new Business
+                {
+                    Name = "El Helw Street Branch",
+                    BrandName = "Metro Bank",
+                    Description =
+                        "Accounts and cash deposits",
+                    Address =
+                        "12 El Helw Street, Tanta",
+
+                    Latitude = 30.7850,
+                    Longitude = 31.0020,
+
+                    Rating = 4.6,
+                    PopularityScore = 85,
+                    IsOpen = true,
+
+                    ImageUrl =
+                        "https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?w=600",
+
+                    CategoryId = bankCategory.Id
+                },
+
+                new Business
+                {
+                    Name = "Tanta Medical District Branch",
+                    BrandName = "Metro Bank",
+                    Description =
+                        "Branch located next to medical hub",
+                    Address =
+                        "Medical District, Tanta",
+
+                    Latitude = 30.7950,
+                    Longitude = 31.0070,
+
+                    Rating = 4.4,
+                    PopularityScore = 80,
+                    IsOpen = true,
+
+                    ImageUrl =
+                        "https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?w=600",
+
+                    CategoryId = bankCategory.Id
+                },
+
+                new Business
+                {
+                    Name = "Tanta West Bank Branch",
+                    BrandName = "Metro Bank",
+                    Description =
+                        "Retail and corporate banking",
+                    Address =
+                        "West District, Tanta",
+
+                    Latitude = 30.7780,
+                    Longitude = 30.9950,
+
+                    Rating = 4.5,
+                    PopularityScore = 78,
+                    IsOpen = true,
+
+                    ImageUrl =
+                        "https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?w=600",
+
+                    CategoryId = bankCategory.Id
+                },
+
+                new Business
+                {
+                    Name = "Tanta Financial District Branch",
+                    BrandName = "Metro Bank",
+                    Description =
+                        "Full investment and retail financial branch",
+                    Address =
+                        "Financial District, Tanta",
+
+                    Latitude = 30.7890,
+                    Longitude = 31.0030,
+
+                    Rating = 4.8,
+                    PopularityScore = 93,
                     IsOpen = true,
 
                     ImageUrl =
@@ -308,6 +419,9 @@ namespace QueueLess.Infrastructure.Persistence
                     existingBusiness.CategoryId =
                         seedBusiness.CategoryId;
 
+                    existingBusiness.BrandName =
+                        seedBusiness.BrandName;
+
                     existingBusiness.IsActive = true;
                 }
             }
@@ -398,6 +512,47 @@ namespace QueueLess.Infrastructure.Persistence
                     {
                         Id = Guid.NewGuid(),
                         BusinessId = metroBankId,
+                        Name = "Business banking",
+                        Description =
+                            "Company accounts and merchant services",
+                        AvgServiceTimeMinutes = 20,
+                        CountersOpen = 2
+                    });
+            }
+
+            if (businesses.TryGetValue(
+                "Tanta City Center Branch",
+                out var cityCenterBranchId))
+            {
+                seedServices.Add(
+                    new Service
+                    {
+                        Id = Guid.NewGuid(),
+                        BusinessId = cityCenterBranchId,
+                        Name = "Customer service",
+                        Description =
+                            "Account help, cards, general queries",
+                        AvgServiceTimeMinutes = 9,
+                        CountersOpen = 5
+                    });
+
+                seedServices.Add(
+                    new Service
+                    {
+                        Id = Guid.NewGuid(),
+                        BusinessId = cityCenterBranchId,
+                        Name = "Loans and credit",
+                        Description =
+                            "Applications and repayments",
+                        AvgServiceTimeMinutes = 15,
+                        CountersOpen = 3
+                    });
+
+                seedServices.Add(
+                    new Service
+                    {
+                        Id = Guid.NewGuid(),
+                        BusinessId = cityCenterBranchId,
                         Name = "Business banking",
                         Description =
                             "Company accounts and merchant services",

@@ -70,6 +70,9 @@ namespace QueueLess.Infrastructure.Persistence.Configurations
                 .IsRequired()
                 .HasMaxLength(100);
 
+            builder.Property(b => b.BrandName)
+                .HasMaxLength(100);
+
             builder.Property(b => b.Description)
                 .HasMaxLength(500);
 

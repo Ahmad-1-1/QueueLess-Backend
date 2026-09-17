@@ -19,6 +19,8 @@ namespace QueueLess.Application.Interfaces
 
         Task<Business?> GetByIdAsync(Guid id);
 
+        Task<List<Business>> GetBranchesAsync(Guid businessId);
+
         Task AddCategoryAsync(BusinessCategory category);
 
         Task AddBusinessAsync(Business business);

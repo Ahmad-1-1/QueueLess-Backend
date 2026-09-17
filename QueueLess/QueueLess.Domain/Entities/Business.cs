@@ -9,6 +9,9 @@ namespace QueueLess.Domain.Entities
 
         public string Name { get; set; } = string.Empty;
 
+        // Brand / Chain name to group multiple branches together (e.g. "Metro Bank")
+        public string? BrandName { get; set; }
+
         public string Description { get; set; } = string.Empty;
 
         public string Address { get; set; } = string.Empty;

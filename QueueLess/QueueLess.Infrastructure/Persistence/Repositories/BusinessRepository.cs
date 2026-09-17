@@ -115,6 +115,29 @@ namespace QueueLess.Infrastructure.Persistence.Repositories
                 .FirstOrDefaultAsync(b => b.Id == id && b.IsActive);
         }
 
+        public async Task<List<Business>> GetBranchesAsync(Guid businessId)
+        {
+            var business = await _context.Businesses
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.Id == businessId && b.IsActive);
+
+            if (business == null)
+                return new List<Business>();
+
+            var brand = !string.IsNullOrWhiteSpace(business.BrandName)
+                ? business.BrandName.Trim()
+                : business.Name.Trim();
+
+            // Find all active businesses sharing this BrandName, or matching the brand name
+            return await _context.Businesses
+                .Include(b => b.Category)
+                .Where(b => b.IsActive && 
+                            ((b.BrandName != null && b.BrandName == brand) ||
+                             b.Name.Contains(brand)))
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
         public async Task AddCategoryAsync(BusinessCategory category)
         {
             await _context.BusinessCategories.AddAsync(category);

@@ -134,11 +134,25 @@ namespace QueueLess.API
                     scope.ServiceProvider
                         .GetRequiredService<QueueLessDbContext>();
 
-                context.Database.Migrate();
+                try
+                {
+                    context.Database.Migrate();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Warning] Database.Migrate skipped: {ex.Message}");
+                }
 
-                DbSeeder.SeedAsync(context)
-                    .GetAwaiter()
-                    .GetResult();
+                try
+                {
+                    DbSeeder.SeedAsync(context)
+                        .GetAwaiter()
+                        .GetResult();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Warning] DbSeeder skipped: {ex.Message}");
+                }
             }
 
             // Global exception handling
