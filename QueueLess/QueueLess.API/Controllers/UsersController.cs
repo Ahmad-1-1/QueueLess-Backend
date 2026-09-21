@@ -62,5 +62,12 @@ namespace QueueLess.API.Controllers
             await _authService.ChangePasswordAsync(CurrentUserId, request);
             return Ok(new { message = "Password changed successfully." });
         }
+
+        [HttpPut("me/fcm-token")]
+        public async Task<IActionResult> UpdateFcmToken([FromBody] UpdateFcmTokenRequest request)
+        {
+            await _userService.UpdateFcmTokenAsync(CurrentUserId, request);
+            return Ok(new { message = "FCM token updated successfully." });
+        }
     }
 }

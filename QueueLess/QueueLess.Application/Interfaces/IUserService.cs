@@ -10,6 +10,7 @@ namespace QueueLess.Application.Interfaces
         Task<UserProfileResponse> UpdatePhoneAsync(Guid userId, UpdatePhoneRequest request);
         Task<UserProfileResponse> UpdateEmailAsync(Guid userId, UpdateEmailRequest request);
         Task<UserProfileResponse> UpdateNameAsync(Guid userId, UpdateNameRequest request);
+        Task UpdateFcmTokenAsync(Guid userId, UpdateFcmTokenRequest request);
     }
 }
 

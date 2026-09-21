@@ -94,6 +94,19 @@ namespace QueueLess.Application.Services
             return MapToResponse(user);
         }
 
+        public async Task UpdateFcmTokenAsync(Guid userId, UpdateFcmTokenRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.FcmToken))
+                throw new ArgumentException("FCM token is required.", nameof(request.FcmToken));
+
+            var user = await _userRepository.GetByIdAsync(userId)
+                ?? throw new InvalidOperationException("User not found.");
+
+            user.FcmToken = request.FcmToken.Trim();
+            await _userRepository.UpdateAsync(user);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
         private static UserProfileResponse MapToResponse(User user) => new UserProfileResponse
         {
             UserId = user.Id,
