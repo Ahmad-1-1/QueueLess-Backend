@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using QueueLess.Infrastructure.Services;
+using QueueLess.Infrastructure.Notifications;
 
 namespace QueueLess.API
 {
@@ -40,6 +41,11 @@ namespace QueueLess.API
             builder.Services.AddScoped<ITicketService, TicketService>();
             builder.Services.Configure<PictureOptions>(
                 builder.Configuration.GetSection(PictureOptions.SectionName));
+            builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
+
+            builder.Services.AddScoped<INotificationStrategy, InAppNotificationStrategy>();
+            builder.Services.AddScoped<INotificationStrategy, PushNotificationStrategy>();
             builder.Services.AddScoped<IPictureResolver, PictureResolver>();
             builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();
             builder.Services.AddControllers();

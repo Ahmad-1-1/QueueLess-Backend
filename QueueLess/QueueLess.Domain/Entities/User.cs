@@ -11,6 +11,7 @@ namespace QueueLess.Domain.Entities
         public string PasswordHash { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
         public Role Role { get; set; }
+        public string? FcmToken { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public bool IsActive { get; set; } = true;
     }

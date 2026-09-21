@@ -15,6 +15,8 @@ namespace QueueLess.Application.Services
         private readonly ITokenService _tokenService;
         private readonly IOtpRepository _otpRepository;
         private readonly IEmailService _emailService;
+        private readonly INotificationService _notificationService;
+
 
         public AuthService(
             IUserRepository userRepository,
@@ -22,7 +24,8 @@ namespace QueueLess.Application.Services
             IPasswordHasher passwordHasher,
             ITokenService tokenService,
             IOtpRepository otpRepository,
-            IEmailService emailService)
+            IEmailService emailService,
+            INotificationService notificationService)
         {
             _userRepository = userRepository;
             _unitOfWork = unitOfWork;
@@ -30,6 +33,7 @@ namespace QueueLess.Application.Services
             _tokenService = tokenService;
             _otpRepository = otpRepository;
             _emailService = emailService;
+            _notificationService = notificationService;
         }
 
         public async Task<RegisterResponse> RegisterAsync(RegisterRequest request)
@@ -71,6 +75,14 @@ namespace QueueLess.Application.Services
             await _userRepository.AddAsync(user);
             await _unitOfWork.SaveChangesAsync();
 
+            await _notificationService.NotifyAsync(new NotificationContext
+            {
+                UserId = user.Id,
+                Title = "Welcome to QueueLess!",
+                Message = $"Hello {user.FullName}, welcome to QueueLess.",
+                Type = NotificationType.Welcome
+            });
+
             return new RegisterResponse
             {
                 UserId = user.Id,
@@ -96,6 +108,14 @@ namespace QueueLess.Application.Services
                 throw new InvalidOperationException("User account is inactive.");
 
             var token = _tokenService.GenerateToken(user);
+
+            await _notificationService.NotifyAsync(new NotificationContext
+            {
+                UserId = user.Id,
+                Title = "Hello!",
+                Message = $"Welcome back, {user.FullName}.",
+                Type = NotificationType.Greeting
+            });
 
             return new LoginResponse
             {

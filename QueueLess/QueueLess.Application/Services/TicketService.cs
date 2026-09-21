@@ -13,11 +13,13 @@ namespace QueueLess.Application.Services
     {
         private readonly ITicketRepository _ticketRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly INotificationService _notificationService;
 
-        public TicketService(ITicketRepository ticketRepository, IUnitOfWork unitOfWork)
+        public TicketService(ITicketRepository ticketRepository, IUnitOfWork unitOfWork, INotificationService notificationService)
         {
             _ticketRepository = ticketRepository;
             _unitOfWork = unitOfWork;
+            _notificationService = notificationService;
         }
 
         public async Task<List<ServiceDetailDto>> GetServicesByBusinessIdAsync(Guid businessId)
@@ -82,6 +84,15 @@ namespace QueueLess.Application.Services
 
             await _ticketRepository.AddAsync(ticket);
             await _unitOfWork.SaveChangesAsync();
+
+            await _notificationService.NotifyAsync(new NotificationContext
+            {
+                UserId = customerId,
+                TicketId = ticket.Id,
+                Title = "Ticket Booked",
+                Message = $"Your ticket {ticket.TicketNumber} has been booked successfully.",
+                Type = NotificationType.TicketBooked
+            });
 
             // 5. Build live queue calculation
             var peopleAhead = await _ticketRepository.GetPeopleAheadAsync(service.Id, ticket.QueueNumber);
@@ -194,6 +205,15 @@ namespace QueueLess.Application.Services
             ticket.Status = TicketStatus.Cancelled;
             await _ticketRepository.UpdateAsync(ticket);
             await _unitOfWork.SaveChangesAsync();
+
+            await _notificationService.NotifyAsync(new NotificationContext
+            {
+                UserId = customerId,
+                TicketId = ticket.Id,
+                Title = "Ticket Cancelled",
+                Message = $"Your ticket {ticket.TicketNumber} has been cancelled successfully.",
+                Type = NotificationType.TicketCancelled
+            });
         }
     }
 }

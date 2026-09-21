@@ -36,8 +36,12 @@ namespace QueueLess.Infrastructure.Persistence.Configurations
             builder.Property(u => u.Role)
                 .HasConversion<string>()
                 .HasMaxLength(20);
+
+            builder.Property(u => u.FcmToken)
+                .HasMaxLength(500);
         }
     }
+
 
     public class BusinessCategoryConfiguration : IEntityTypeConfiguration<BusinessCategory>
     {
@@ -214,8 +218,12 @@ namespace QueueLess.Infrastructure.Persistence.Configurations
             builder.ToTable("Notifications");
             builder.HasKey(n => n.Id);
 
-            builder.Property(n => n.Type)
+            builder.Property(n => n.Title)
                 .IsRequired()
+                .HasMaxLength(200);
+
+            builder.Property(n => n.Type)
+                .HasConversion<string>()
                 .HasMaxLength(50);
 
             builder.Property(n => n.Message)
@@ -225,7 +233,8 @@ namespace QueueLess.Infrastructure.Persistence.Configurations
             builder.HasOne(n => n.Ticket)
                 .WithMany()
                 .HasForeignKey(n => n.TicketId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
 
             builder.HasOne(n => n.User)
                 .WithMany()
@@ -233,4 +242,5 @@ namespace QueueLess.Infrastructure.Persistence.Configurations
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }
+
 }
